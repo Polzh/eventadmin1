@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Astana Events — Панель администратора</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #0b0b10; --accent-from: #ff2e63; --accent-to: #ff6b6b;
+      --card-bg: rgba(255,255,255,0.05); --border: rgba(255,255,255,0.1);
+      --text: #f5f5f5;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at top, #1a1a25 0, #0b0b10 45%, #050509 100%);
+      min-height: 100vh;
+    }
+    .admin-wrap { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+    .glass {
+      background: radial-gradient(circle at top left, rgba(255,255,255,.08), transparent),
+        radial-gradient(circle at bottom right, rgba(255,255,255,.04), transparent), var(--card-bg);
+      border: 1px solid var(--border); backdrop-filter: blur(18px);
+      border-radius: 18px; padding: 20px; margin-bottom: 20px;
+    }
+    .login-box { max-width: 360px; margin: 80px auto; padding: 24px; }
+    .label { font-size: 12px; color: rgba(255,255,255,.75); margin-bottom: 4px; display: block; }
+    .field {
+      width: 100%;
+      border-radius: 999px;
+      padding: 10px 14px;
+      border: 1px solid rgba(255,255,255,.25);
+      background: rgba(0,0,0,.5);
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+      margin-bottom: 12px;
+    }
+    .btn { padding: 10px 18px; border-radius: 999px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; }
+    .btn-main { background: linear-gradient(120deg,#ff2e63,#ff6b6b); color: #fff; }
+    .btn-danger { background: #dc2626; color: #fff; padding: 6px 12px; font-size: 12px; }
+    .btn-small { padding: 6px 12px; font-size: 12px; }
+    .error { font-size: 12px; color: #f97373; margin-top: 4px; }
+    h1 { font-size: 22px; margin: 0 0 8px; }
+    h2 { font-size: 18px; margin: 0 0 12px; }
+    .stats { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; margin-bottom: 20px; }
+    .stat-card { padding: 14px; border-radius: 14px; background: rgba(0,0,0,.4); text-align: center; }
+    .stat-value { font-size: 24px; font-weight: 700; }
+    .stat-label { font-size: 12px; color: rgba(255,255,255,.6); margin-top: 4px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,.08); }
+    th { color: rgba(255,255,255,.6); font-weight: 500; }
+    .add-form { display: grid; gap: 12px; margin-bottom: 16px; }
+    .add-form .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .add-form .full { grid-column: 1 / -1; }
+    .back-link { font-size: 14px; color: rgba(255,255,255,.7); display: inline-block; margin-bottom: 16px; }
+    .back-link:hover { color: #fff; }
+    @media (max-width: 767px) {
+      .stats { grid-template-columns: 1fr; }
+      .add-form .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div id="loginScreen" class="admin-wrap">
+    <div class="glass login-box">
+      <h1>Вход в админ-панель</h1>
+      <p style="font-size:13px;color:rgba(255,255,255,.65);margin:0 0 16px;">Введите логин и пароль администратора.</p>
+      <label class="label">Логин</label>
+      <input class="field" type="text" id="adminLogin" placeholder="Логин" autocomplete="username" />
+      <label class="label">Пароль</label>
+      <input class="field" type="password" id="adminPass" placeholder="Пароль" autocomplete="current-password" />
+      <div class="error" id="loginError"></div>
+      <button class="btn btn-main" style="width:100%;margin-top:8px;" id="loginBtn">Войти</button>
+      <a href="index.html" class="back-link" style="display:block;margin-top:16px;">← На главный сайт</a>
+    </div>
+  </div>
+
+  <div id="adminScreen" class="admin-wrap" style="display:none;">
+    <a href="index.html" class="back-link">← На главный сайт</a>
+    <a href="admin.html" class="back-link" style="margin-left:12px;">Обновить</a>
+    <button class="btn btn-main btn-small" id="logoutBtn" style="float:right;">Выйти</button>
+
+    <div class="glass">
+      <h1>Панель администратора</h1>
+      <p style="font-size:14px;color:rgba(255,255,255,.7);margin:0 0 16px;">Управление мероприятиями и просмотр покупок.</p>
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-value" id="statEvents">0</div>
+          <div class="stat-label">Мероприятий</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statPurchases">0</div>
+          <div class="stat-label">Покупок</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statRevenue">0 ₸</div>
+          <div class="stat-label">Общая сумма</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass">
+      <h2>Добавить мероприятие</h2>
+      <div class="add-form">
+        <div class="row">
+          <div>
+            <label class="label">Название</label>
+            <input class="field" id="addTitle" placeholder="Название события" />
+          </div>
+          <div>
+            <label class="label">Место</label>
+            <input class="field" id="addPlace" placeholder="Астана Арена" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label class="label">Дата</label>
+            <input class="field" id="addDate" placeholder="15.03.2026" />
+          </div>
+          <div>
+            <label class="label">Цена (₸)</label>
+            <input class="field" type="number" id="addPrice" placeholder="15000" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label class="label">Длительность (ч)</label>
+            <input class="field" type="number" id="addDuration" placeholder="3" />
+          </div>
+          <div>
+            <label class="label">Тип</label>
+            <input class="field" id="addType" placeholder="concert, theatre, sport..." />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label class="label">Широта (lat)</label>
+            <input class="field" type="number" step="any" id="addLat" placeholder="51.1282" />
+          </div>
+          <div>
+            <label class="label">Долгота (lng)</label>
+            <input class="field" type="number" step="any" id="addLng" placeholder="71.4304" />
+          </div>
+        </div>
+        <button class="btn btn-main" id="addBtn">Добавить мероприятие</button>
+      </div>
+    </div>
+
+    <div class="glass">
+      <h2>Список мероприятий</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Название</th>
+              <th>Место</th>
+              <th>Дата</th>
+              <th>Цена</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody id="eventsTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="glass">
+      <h2>История покупок</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Дата</th>
+              <th>Событие</th>
+              <th>Кол-во</th>
+              <th>Сумма</th>
+              <th>Способ</th>
+            </tr>
+          </thead>
+          <tbody id="purchasesTable"></tbody>
+        </table>
+      </div>
+      <p id="purchasesEmpty" style="font-size:14px;color:rgba(255,255,255,.55);display:none;">Покупок пока нет.</p>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script>
+    const ADMIN_LOGIN = 'olzaaid';
+    const ADMIN_PASS = '27102006';
+
+    const loginScreen = document.getElementById('loginScreen');
+    const adminScreen = document.getElementById('adminScreen');
+    const adminLogin = document.getElementById('adminLogin');
+    const adminPass = document.getElementById('adminPass');
+    const loginError = document.getElementById('loginError');
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    function checkAuth() {
+      const token = localStorage.getItem('astana_admin_token');
+      if (token === 'ok') {
+        loginScreen.style.display = 'none';
+        adminScreen.style.display = 'block';
+        renderAdmin();
+        return true;
+      }
+      return false;
+    }
+
+    loginBtn.addEventListener('click', () => {
+      const login = adminLogin.value.trim();
+      const pass = adminPass.value;
+      if (login !== ADMIN_LOGIN || pass !== ADMIN_PASS) {
+        loginError.textContent = 'Неверный логин или пароль.';
+        return;
+      }
+      loginError.textContent = '';
+      localStorage.setItem('astana_admin_token', 'ok');
+      checkAuth();
+    });
+
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('astana_admin_token');
+      loginScreen.style.display = 'block';
+      adminScreen.style.display = 'none';
+    });
+
+    if (checkAuth()) {}
+
+    function renderAdmin() {
+      const events = getEvents();
+      const purchases = getPurchases();
+
+      document.getElementById('statEvents').textContent = events.length;
+      document.getElementById('statPurchases').textContent = purchases.length;
+      const total = purchases.reduce((s, p) => s + (p.total || 0), 0);
+      document.getElementById('statRevenue').textContent = total.toLocaleString('ru-RU') + ' ₸';
+
+      const eventsTable = document.getElementById('eventsTable');
+      eventsTable.innerHTML = events.map(e => `
+        <tr>
+          <td>${e.id}</td>
+          <td>${e.title}</td>
+          <td>${e.place}</td>
+          <td>${e.date}</td>
+          <td>${(e.price || 0).toLocaleString('ru-RU')} ₸</td>
+          <td><button class="btn btn-danger" data-delete="${e.id}">Удалить</button></td>
+        </tr>
+      `).join('');
+
+      eventsTable.querySelectorAll('[data-delete]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = parseInt(btn.getAttribute('data-delete'), 10);
+          const list = getEvents().filter(e => e.id !== id);
+          setEvents(list);
+          renderAdmin();
+        });
+      });
+
+      const purchasesTable = document.getElementById('purchasesTable');
+      const purchasesEmpty = document.getElementById('purchasesEmpty');
+      if (!purchases.length) {
+        purchasesTable.innerHTML = '';
+        purchasesEmpty.style.display = 'block';
+      } else {
+        purchasesEmpty.style.display = 'none';
+        purchasesTable.innerHTML = purchases.map(p => {
+          const d = new Date(p.date);
+          const dateStr = d.toLocaleDateString('ru-RU') + ' ' + d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+          return `
+            <tr>
+              <td>${dateStr}</td>
+              <td>${p.eventTitle || '-'}</td>
+              <td>${p.qty || 0}</td>
+              <td>${(p.total || 0).toLocaleString('ru-RU')} ₸</td>
+              <td>${p.method || '-'}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+
+    document.getElementById('addBtn').addEventListener('click', () => {
+      const events = getEvents();
+      const maxId = Math.max(0, ...events.map(e => e.id));
+      const title = document.getElementById('addTitle').value.trim();
+      const place = document.getElementById('addPlace').value.trim();
+      const date = document.getElementById('addDate').value.trim();
+      const price = parseInt(document.getElementById('addPrice').value || '0', 10);
+      const duration = parseInt(document.getElementById('addDuration').value || '0', 10);
+      const type = document.getElementById('addType').value.trim() || 'event';
+      const lat = parseFloat(document.getElementById('addLat').value || '51.1282');
+      const lng = parseFloat(document.getElementById('addLng').value || '71.4304');
+
+      if (!title || !place || !date) {
+        alert('Заполните название, место и дату.');
+        return;
+      }
+
+      events.push({
+        id: maxId + 1,
+        title,
+        place,
+        date,
+        price,
+        duration,
+        type,
+        lat,
+        lng
+      });
+      setEvents(events);
+
+      document.getElementById('addTitle').value = '';
+      document.getElementById('addPlace').value = '';
+      document.getElementById('addDate').value = '';
+      document.getElementById('addPrice').value = '';
+      document.getElementById('addDuration').value = '';
+      document.getElementById('addType').value = '';
+      document.getElementById('addLat').value = '';
+      document.getElementById('addLng').value = '';
+
+      renderAdmin();
+      alert('Мероприятие добавлено.');
+    });
+  </script>
+</body>
+</html>
